@@ -172,6 +172,7 @@ export default function TestPage() {
   // STEP 3 — Results
   if (step === "results") {
     const scorePercent = Math.round((correctCount / questions.length) * 100);
+    console.log("scorePercent:", scorePercent);
 
     const getFeedback = () => {
       if (scorePercent === 100)
@@ -188,7 +189,7 @@ export default function TestPage() {
           emoji: "📘",
           text: "Not bad! Some review will make you stronger.",
         };
-      return { emoji: "🔥", text: "Keep practicing — you’ll improve fast!" };
+      return { emoji: "🤔", text: "Keep practicing — you’ll improve fast!" };
     };
 
     const feedback = getFeedback();
@@ -196,7 +197,6 @@ export default function TestPage() {
     return (
       <div className="relative min-h-screen flex flex-col items-center justify-center bg-background text-foreground px-4 py-16 sm:py-24 animate-fadeIn overflow-hidden">
         {/* Confetti animation */}
-        <div className="confetti" aria-hidden="true" />
 
         <Card className="max-w-md w-full text-center bg-card text-card-foreground shadow-lg border border-border relative z-10">
           <CardHeader>

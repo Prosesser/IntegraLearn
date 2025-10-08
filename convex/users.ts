@@ -26,3 +26,14 @@ export const ensureUser = mutation({
     return newUserId;
   },
 });
+
+export const getByClerkId = query({
+  args: { clerkId: v.optional(v.string()) },
+  handler: async (ctx, { clerkId }) => {
+    if (!clerkId) return null;
+    return ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("clerkId"), clerkId))
+      .first();
+  },
+});

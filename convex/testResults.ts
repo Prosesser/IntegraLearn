@@ -1,4 +1,4 @@
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
 export const saveTestResult = mutation({
@@ -38,5 +38,17 @@ export const saveTestResult = mutation({
         createdAt: Date.now(),
       });
     }
+  },
+});
+
+// Query to fetch all test results for a given internal user id
+export const getByUser = query({
+  args: { userId: v.optional(v.id("users")) },
+  handler: async (ctx, { userId }) => {
+    if (!userId) return [];
+    return ctx.db
+      .query("testResults")
+      .filter((q) => q.eq(q.field("userId"), userId))
+      .collect();
   },
 });
