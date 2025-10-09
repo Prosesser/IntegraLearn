@@ -59,6 +59,24 @@ export default function TestPage() {
         name: user.fullName ?? "",
         email: user.primaryEmailAddress?.emailAddress ?? "",
       });
+
+      // Build per-topic breakdown from the answered questions
+      const topicMap: Record<string, { correct: number; total: number }> = {};
+      for (const q of questions) {
+        const topic = q.topic ?? "General";
+        if (!topicMap[topic]) topicMap[topic] = { correct: 0, total: 0 };
+        topicMap[topic].total += 1;
+        const given = answers[q.id];
+        if (typeof given === "number" && q.answer === given) {
+          topicMap[topic].correct += 1;
+        }
+      }
+      const topicBreakdown = Object.entries(topicMap).map(([topic, t]) => ({
+        topic,
+        correct: t.correct,
+        total: t.total,
+      }));
+
       await saveTestResult({
         userId,
         grade: `Grade ${level! + 8}`,
@@ -66,6 +84,7 @@ export default function TestPage() {
         score: correctCount,
         total: questions.length,
         feedback: "To be generated later",
+        topicBreakdown,
       });
       router.push("/dashboard");
     } catch (err) {
