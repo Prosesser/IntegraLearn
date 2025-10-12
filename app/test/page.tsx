@@ -14,6 +14,8 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { questions as allQuestions } from "@/data/questions";
+import { Authenticated, Unauthenticated } from "convex/react";
+import Link from "next/link";
 
 export default function TestPage() {
   const router = useRouter();
@@ -98,47 +100,67 @@ export default function TestPage() {
   // STEP 1 — Level selection
   if (step === "select") {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16 sm:py-24 bg-background text-foreground animate-fadeIn">
-        <div className="max-w-3xl w-full text-center space-y-10 transition-all duration-500 ease-in-out">
-          <div>
-            <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
-              Welcome to Your Math Diagnostic
-            </h1>
-            <p className="mt-4 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-              Choose your current grade level to begin. This quick test will
-              assess your strengths and help tailor your learning path.
-            </p>
-          </div>
-
-          <Card className="bg-card text-card-foreground shadow-md border border-border transition-all duration-300">
-            <CardHeader>
-              <CardTitle className="text-2xl sm:text-3xl font-semibold text-card-foreground">
-                Select Your Level
-              </CardTitle>
-              <CardDescription className="text-base text-muted-foreground">
-                Pick the grade that best represents your current skill level.
-              </CardDescription>
-            </CardHeader>
-
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                {[1, 2, 3, 4].map((lvl) => (
-                  <Button
-                    key={lvl}
-                    onClick={() => handleSelectLevel(lvl)}
-                    className="w-full h-24 text-lg font-medium bg-primary text-primary-foreground rounded-xl transform transition-all hover:scale-105 active:scale-95 hover:bg-primary/90"
-                  >
-                    <div>
-                      <p className="text-2xl font-semibold">Level {lvl}</p>
-                      <p className="text-sm opacity-90">(Grade {lvl + 8})</p>
-                    </div>
-                  </Button>
-                ))}
+      <>
+        <Authenticated>
+          <div className="min-h-screen flex flex-col items-center justify-center px-4 py-16 sm:py-24 bg-background text-foreground animate-fadeIn">
+            <div className="max-w-3xl w-full text-center space-y-10 transition-all duration-500 ease-in-out">
+              <div>
+                <h1 className="text-4xl sm:text-5xl font-bold tracking-tight text-foreground">
+                  Welcome to Your Math Diagnostic
+                </h1>
+                <p className="mt-4 text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
+                  Choose your current grade level to begin. This quick test will
+                  assess your strengths and help tailor your learning path.
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+
+              <Card className="bg-card text-card-foreground shadow-md border border-border transition-all duration-300">
+                <CardHeader>
+                  <CardTitle className="text-2xl sm:text-3xl font-semibold text-card-foreground">
+                    Select Your Level
+                  </CardTitle>
+                  <CardDescription className="text-base text-muted-foreground">
+                    Pick the grade that best represents your current skill
+                    level.
+                  </CardDescription>
+                </CardHeader>
+
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mt-6">
+                    {[1, 2, 3, 4].map((lvl) => (
+                      <Button
+                        key={lvl}
+                        onClick={() => handleSelectLevel(lvl)}
+                        className="w-full h-24 text-lg font-medium bg-primary text-primary-foreground rounded-xl transform transition-all hover:scale-105 active:scale-95 hover:bg-primary/90"
+                      >
+                        <div>
+                          <p className="text-2xl font-semibold">Level {lvl}</p>
+                          <p className="text-sm opacity-90">
+                            (Grade {lvl + 8})
+                          </p>
+                        </div>
+                      </Button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </Authenticated>
+        <Unauthenticated>
+          <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-4">
+            <h1 className="text-3xl font-semibold tracking-tight">
+              Please sign in to continue
+            </h1>
+            <p className="text-muted-foreground">
+              You need an account to access this page.
+            </p>
+            <Button asChild size="lg" className="rounded-full">
+              <Link href="/">Sign In</Link>
+            </Button>
+          </div>
+        </Unauthenticated>
+      </>
     );
   }
 

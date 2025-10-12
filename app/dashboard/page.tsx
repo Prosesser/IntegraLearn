@@ -15,6 +15,38 @@ import {
   Tooltip,
 } from "recharts";
 
+// --- Topics by Grade ---
+const GRADE_TOPICS: Record<string, string[]> = {
+  "Grade 9": [
+    "Number Sense & Algebra",
+    "Linear Relations",
+    "Measurement & Geometry",
+    "Data Management",
+  ],
+  "Grade 10": [
+    "Quadratic Functions",
+    "Trigonometry",
+    "Systems of Equations",
+    "Exponents & Powers",
+  ],
+  "Grade 11": [
+    "Advanced Functions",
+    "Sequences & Series",
+    "Analytic Geometry",
+    "Counting & Probability",
+  ],
+  "Grade 12": [
+    "Exponents & Logarithms",
+    "Trigonometry",
+    "Functions, Equations, and Polynomials",
+    "Analytic Geometry",
+    "Sequences & Series",
+    "Euclidean Geometry",
+    "Counting & Probability",
+    "Properties of Numbers",
+  ],
+};
+
 export default function DashboardPage() {
   const { user } = useUser();
 
@@ -31,54 +63,79 @@ export default function DashboardPage() {
     internalUser ? { userId: internalUser._id } : "skip"
   );
 
-  const { topicData, overallStats, focusAreas, topTopics } = useMemo(() => {
-    if (!Array.isArray(testResults) || testResults.length === 0) {
+  const { topicData, overallStats, strengths, focusAreas, activeGrade } =
+    useMemo(() => {
+      if (!Array.isArray(testResults) || testResults.length === 0) {
+        return {
+          topicData: [],
+          overallStats: { correct: 0, incorrect: 0, percent: 0 },
+          strengths: [],
+          focusAreas: [],
+          activeGrade: "Grade 9",
+        };
+      }
+
+      // 🧮 Get the most recent test and its grade
+      const latestTest = [...testResults].sort(
+        (a, b) =>
+          (b.createdAt ?? b._creationTime) - (a.createdAt ?? a._creationTime)
+      )[0];
+      const activeGrade = latestTest.grade ?? "Grade 9";
+      const gradeTopics = GRADE_TOPICS[activeGrade] ?? [];
+
+      // 🧩 Get topic stats for that grade
+      const rawTopicData =
+        Array.isArray(topicAggregates) && topicAggregates.length > 0
+          ? topicAggregates.map((t: any) => ({
+              topic: t.topic,
+              percent: t.percent,
+              correct: t.correct,
+              total: t.total,
+            }))
+          : [];
+
+      const topicData = gradeTopics.map((topic) => {
+        const found = rawTopicData.find((t) => t.topic === topic);
+        return found ?? { topic, percent: 0, correct: 0, total: 0 };
+      });
+
+      // 🧠 Overall stats
+      const totalScore = testResults.reduce((s, r) => s + (r.score ?? 0), 0);
+      const totalTotal = testResults.reduce((s, r) => s + (r.total ?? 0), 0);
+      const percent =
+        totalTotal > 0 ? Math.round((totalScore / totalTotal) * 100) : 0;
+
+      // 💪 Separate strengths (≥50%) and focus (<50%)
+      const strengths = topicData
+        .filter((t) => t.percent >= 50)
+        .sort((a, b) => b.percent - a.percent)
+        .slice(0, 3);
+
+      const focusAreas = topicData
+        .filter((t) => t.percent <= 50)
+        .sort((a, b) => a.percent - b.percent)
+        .slice(0, 3);
+
       return {
-        topicData: [],
-        overallStats: { correct: 0, incorrect: 0, percent: 0 },
-        focusAreas: [],
-        topTopics: [],
+        topicData,
+        overallStats: {
+          correct: totalScore,
+          incorrect: totalTotal - totalScore,
+          percent,
+        },
+        strengths,
+        focusAreas,
+        activeGrade,
       };
-    }
-
-    const topicData =
-      Array.isArray(topicAggregates) && topicAggregates.length > 0
-        ? topicAggregates.map((t: any) => ({
-            topic: t.topic,
-            percent: t.percent,
-            correct: t.correct,
-            total: t.total,
-          }))
-        : [];
-
-    const totalScore = testResults.reduce((s, r) => s + (r.score ?? 0), 0);
-    const totalTotal = testResults.reduce((s, r) => s + (r.total ?? 0), 0);
-    const percent =
-      totalTotal > 0 ? Math.round((totalScore / totalTotal) * 100) : 0;
-
-    const sorted = [...topicData].sort((a, b) => a.percent - b.percent);
-    const focusAreas = sorted.slice(0, 3);
-    const topTopics = sorted.slice(-3).reverse();
-
-    return {
-      topicData,
-      overallStats: {
-        correct: totalScore,
-        incorrect: totalTotal - totalScore,
-        percent,
-      },
-      focusAreas,
-      topTopics,
-    };
-  }, [testResults, topicAggregates]);
+    }, [testResults, topicAggregates]);
 
   return (
     <div className="container mx-auto py-16 px-4 space-y-10">
       <div>
         <h1 className="text-3xl font-semibold mb-2">Dashboard</h1>
         <p className="text-muted-foreground">
-          Welcome back, {user?.username ?? "student"} 👋 Here’s your progress
-          summary.
+          Welcome back, {user?.firstName ?? "student"} 👋 Here’s your progress
+          summary for <span className="font-semibold">{activeGrade}</span>.
         </p>
       </div>
 
@@ -91,14 +148,14 @@ export default function DashboardPage() {
           color="bg-green-500/10 text-green-600"
         />
         <SummaryCard
-          title="Best Topic"
-          value={topicData.length ? topicData.at(-1)?.topic : "—"}
+          title="Top Strength"
+          value={strengths[0]?.topic ?? "—"}
           icon="🏆"
           color="bg-yellow-500/10 text-yellow-600"
           alignLeft
         />
         <SummaryCard
-          title="Needs Work"
+          title="Main Focus Area"
           value={focusAreas[0]?.topic ?? "—"}
           icon="🎯"
           color="bg-red-500/10 text-red-600"
@@ -106,11 +163,12 @@ export default function DashboardPage() {
         />
       </div>
 
-      {/* --- MAIN VISUALS --- */}
+      {/* --- MAIN CHART --- */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* LEFT: Topic Performance Radar Chart */}
         <div className="col-span-2 bg-card p-6 rounded-lg shadow-sm border border-border">
-          <h2 className="text-xl font-medium mb-4">Performance by Topic</h2>
+          <h2 className="text-xl font-medium mb-4">
+            {activeGrade} – Performance by Topic
+          </h2>
           {topicData.length > 0 ? (
             <div style={{ height: 340 }}>
               <ResponsiveContainer width="100%" height="100%">
@@ -129,10 +187,7 @@ export default function DashboardPage() {
                       border: "none",
                       color: "#fff",
                     }}
-                    formatter={(value: number, name, props) => [
-                      `${value}%`,
-                      "Accuracy",
-                    ]}
+                    formatter={(value: number) => [`${value}%`, "Accuracy"]}
                     labelFormatter={(label) => `Topic: ${label}`}
                   />
                   <Radar
@@ -152,37 +207,28 @@ export default function DashboardPage() {
           )}
         </div>
 
-        {/* RIGHT: Overall Accuracy Pie */}
-        <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
+        {/* --- OVERALL ACCURACY RING --- */}
+        <div className="bg-card p-6 rounded-lg shadow-sm border border-border flex flex-col items-center justify-center">
           <h2 className="text-lg font-medium mb-4">Overall Accuracy</h2>
-          {overallStats.correct + overallStats.incorrect > 0 ? (
-            <div className="flex flex-col items-center justify-center h-[240px]">
-              <div className="relative w-40 h-40 rounded-full bg-green-500/10 flex items-center justify-center">
-                <span className="text-4xl font-bold text-green-600">
-                  {overallStats.percent}%
-                </span>
-              </div>
-              <p className="mt-3 text-sm text-muted-foreground">
-                {overallStats.correct} correct / {overallStats.incorrect}{" "}
-                incorrect
-              </p>
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No test results yet.
-            </p>
-          )}
+          <div className="relative w-40 h-40 rounded-full bg-green-500/10 flex items-center justify-center">
+            <span className="text-4xl font-bold text-green-600">
+              {overallStats.percent}%
+            </span>
+          </div>
+          <p className="mt-3 text-sm text-muted-foreground">
+            {overallStats.correct} correct / {overallStats.incorrect} incorrect
+          </p>
         </div>
       </div>
 
-      {/* --- STRENGTHS & FOCUS --- */}
+      {/* --- STRENGTHS & FOCUS AREAS --- */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         {/* Strengths */}
         <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
           <h2 className="text-lg font-medium mb-3">Skill Strengths 💪</h2>
-          {topTopics.length > 0 ? (
+          {strengths.length > 0 ? (
             <ul className="space-y-3">
-              {topTopics.map((t: any) => (
+              {strengths.map((t) => (
                 <li key={t.topic}>
                   <div className="flex justify-between">
                     <span className="font-medium">{t.topic}</span>
@@ -201,7 +247,7 @@ export default function DashboardPage() {
             </ul>
           ) : (
             <p className="text-sm text-muted-foreground">
-              Take a few tests to unlock your top skill areas.
+              You haven’t built any strong topics yet — keep practicing!
             </p>
           )}
         </div>
@@ -211,7 +257,7 @@ export default function DashboardPage() {
           <h2 className="text-lg font-medium mb-3">Focus Areas 🎯</h2>
           {focusAreas.length > 0 ? (
             <ul className="space-y-3">
-              {focusAreas.map((f: any) => (
+              {focusAreas.map((f) => (
                 <li key={f.topic}>
                   <div className="flex justify-between items-center">
                     <span className="font-medium">{f.topic}</span>
@@ -239,66 +285,16 @@ export default function DashboardPage() {
             </ul>
           ) : (
             <p className="text-sm text-muted-foreground">
-              You’re doing great — no weak topics detected yet!
+              Nice work! No weak areas detected.
             </p>
           )}
         </div>
-      </div>
-
-      {/* --- RECENT TESTS --- */}
-      <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
-        <h2 className="text-lg font-medium mb-4">Recent Tests 🧾</h2>
-        {Array.isArray(testResults) && testResults.length > 0 ? (
-          <ul className="divide-y divide-border">
-            {testResults
-              .slice()
-              .sort((a: any, b: any) => b.createdAt - a.createdAt)
-              .slice(0, 5)
-              .map((r: any) => {
-                const percent =
-                  r.total && !Number.isNaN(r.score)
-                    ? Math.round((r.score / r.total) * 100)
-                    : 0;
-                const date = new Date(
-                  r.createdAt ?? r._creationTime ?? 0
-                ).toLocaleDateString();
-                return (
-                  <li
-                    key={r._id}
-                    className="flex justify-between items-center py-3"
-                  >
-                    <div>
-                      <div className="font-medium">{r.topic}</div>
-                      <div className="text-sm text-muted-foreground">
-                        {r.grade ?? "—"} • {date}
-                      </div>
-                    </div>
-                    <span
-                      className={`px-3 py-1 text-sm rounded-full ${
-                        percent >= 80
-                          ? "bg-green-500/10 text-green-600"
-                          : percent >= 60
-                          ? "bg-yellow-500/10 text-yellow-600"
-                          : "bg-red-500/10 text-red-600"
-                      }`}
-                    >
-                      {percent}%
-                    </span>
-                  </li>
-                );
-              })}
-          </ul>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            No tests taken yet. Start your first diagnostic!
-          </p>
-        )}
       </div>
     </div>
   );
 }
 
-// --- Small summary card component ---
+// --- Summary Card ---
 function SummaryCard({
   title,
   value,
