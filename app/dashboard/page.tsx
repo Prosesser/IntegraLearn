@@ -273,7 +273,7 @@ export default function DashboardPage() {
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
                     <Link
-                      href={`/practice?topic=${encodeURIComponent(f.topic)}`}
+                      href={`/resources/${activeGrade}`}
                       className="text-primary underline"
                     >
                       Practice now
