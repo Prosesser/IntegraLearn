@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +16,8 @@ import {
   Target,
   TrendingUp,
 } from "lucide-react";
+import { Authenticated, Unauthenticated } from "convex/react";
+import { SignInButton, SignOutButton } from "@clerk/nextjs";
 
 export default function HomePage() {
   const topics = [
@@ -47,14 +51,12 @@ export default function HomePage() {
     <div className="flex flex-col">
       {/* Hero Section */}
       <section className="relative flex min-h-screen items-center justify-center overflow-hidden bg-gradient-to-b from-primary/10 via-background to-background px-6 sm:px-8">
-        {/* Background effects */}
         <div className="absolute inset-0">
           <div className="absolute -top-40 -left-40 h-[40rem] w-[40rem] rounded-full bg-primary/20 blur-3xl opacity-30" />
           <div className="absolute bottom-0 right-0 h-[35rem] w-[35rem] rounded-full bg-accent/20 blur-3xl opacity-30" />
           <div className="absolute inset-0 bg-grid-white/[0.05]" />
         </div>
 
-        {/* Content */}
         <div className="relative z-10 text-center max-w-3xl mx-auto">
           <h1 className="text-5xl font-bold tracking-tight sm:text-6xl md:text-7xl bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent leading-tight">
             Your Personalized Path to Math Mastery
@@ -66,19 +68,51 @@ export default function HomePage() {
           </p>
 
           <div className="mt-10 flex flex-wrap justify-center gap-4">
-            <Button asChild size="lg" className="group">
-              <Link href="/auth">
-                Get Started
-                <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-              </Link>
-            </Button>
-            <Button asChild variant="outline" size="lg">
+            <Unauthenticated>
+              <SignInButton>
+                <Button
+                  size="lg"
+                  className="group cursor-pointer transition-transform hover:scale-[1.02]"
+                >
+                  Get Started
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Button>
+              </SignInButton>
+            </Unauthenticated>
+
+            <Authenticated>
+              <Button
+                asChild
+                size="lg"
+                className="group cursor-pointer transition-transform hover:scale-[1.02]"
+              >
+                <Link href="/dashboard">
+                  Go to Dashboard
+                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                </Link>
+              </Button>
+              <SignOutButton>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="cursor-pointer transition-transform hover:scale-[1.02]"
+                >
+                  Sign Out
+                </Button>
+              </SignOutButton>
+            </Authenticated>
+
+            <Button
+              asChild
+              variant="outline"
+              size="lg"
+              className="transition-transform hover:scale-[1.02]"
+            >
               <Link href="/resources">Browse Resources</Link>
             </Button>
           </div>
         </div>
 
-        {/* Subtle animated gradient overlay */}
         <div className="absolute inset-0 bg-gradient-to-t from-background/60 via-transparent to-background/60 pointer-events-none" />
       </section>
 
@@ -145,7 +179,7 @@ export default function HomePage() {
             {topics.map((topic) => (
               <Card
                 key={topic.title}
-                className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+                className="group hover:shadow-lg transition-all duration-300 hover:-translate-y-1"
               >
                 <CardHeader>
                   <div
@@ -165,17 +199,31 @@ export default function HomePage() {
           </div>
 
           <div className="mt-10 sm:mt-12 text-center">
-            <Button
-              asChild
-              size="lg"
-              variant="outline"
-              className="w-full sm:w-auto"
-            >
-              <Link href="/auth">
-                Start Learning Today
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Link>
-            </Button>
+            <Unauthenticated>
+              <SignInButton>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="w-full sm:w-auto cursor-pointer transition-transform hover:scale-[1.02]"
+                >
+                  Start Learning Today
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </SignInButton>
+            </Unauthenticated>
+            <Authenticated>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="w-full sm:w-auto cursor-pointer transition-transform hover:scale-[1.02]"
+              >
+                <Link href="/dashboard">
+                  Continue Learning
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </Authenticated>
           </div>
         </div>
       </section>
@@ -192,12 +240,31 @@ export default function HomePage() {
                 Join thousands of students improving their math skills with
                 personalized learning paths.
               </p>
-              <Button asChild size="lg" className="group w-full sm:w-auto">
-                <Link href="/auth">
-                  Begin Your Journey
-                  <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-                </Link>
-              </Button>
+
+              <Unauthenticated>
+                <SignInButton>
+                  <Button
+                    size="lg"
+                    className="group w-full sm:w-auto cursor-pointer transition-transform hover:scale-[1.02]"
+                  >
+                    Begin Your Journey
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Button>
+                </SignInButton>
+              </Unauthenticated>
+
+              <Authenticated>
+                <Button
+                  asChild
+                  size="lg"
+                  className="group w-full sm:w-auto cursor-pointer transition-transform hover:scale-[1.02]"
+                >
+                  <Link href="/dashboard">
+                    View Dashboard
+                    <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  </Link>
+                </Button>
+              </Authenticated>
             </CardContent>
           </Card>
         </div>
